@@ -7,7 +7,7 @@ This repository contains MATLAB code for analyzing coverage and transmission sys
 ### Overview
 This section includes the setup for a directive transmitter located at the "Panorama" site in Pitalito, Huila. The goal is to analyze the coverage area and determine the inclination angles toward the receivers, "Isla" and "Centro."
 
-![Coverage_Map1](Cobertura_Alcance_Retroalcance.png)
+![Coverage Map 1](images/Coverage_Map1.png)
 
 ### Code Highlights
 
@@ -50,6 +50,8 @@ This section includes the setup for a directive transmitter located at the "Pano
 
 ### Overview
 This section defines an omnidirectional transmitter also located at "Panorama." The focus is on mapping the coverage area and establishing communication links with mobile receivers.
+
+![Coverage Map 2](images/Coverage_Map2.png)
 
 ### Code Highlights
 
