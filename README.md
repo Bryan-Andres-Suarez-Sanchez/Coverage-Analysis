@@ -1,100 +1,91 @@
-# Coverage Analysis Project
+# Coverage Analysis and Transmission Systems
 
-## Overview
-This project aims to analyze the coverage of two types of transmitters: a directional transmitter and an omnidirectional transmitter, both located in "Panorama", Pitalito, Huila, Colombia. The analysis includes the calculation of elevation angles, antenna design, and coverage mapping using the Longley-Rice propagation model.
+This repository contains MATLAB code for analyzing coverage and transmission systems using directive and omnidirectional transmitters.
 
-## Directing Transmitter Code
+## Directive Transmitter
 
-### Description
-The code for the directional transmitter defines the reception sites at "Isla" and "Centro". It calculates elevation angles to point the antenna towards the receivers and creates a linear array of dipoles.
+### Overview
+This section includes the setup for a directive transmitter located at the "Panorama" site in Pitalito, Huila. The goal is to analyze the coverage area and determine the inclination angles toward the receivers, "Isla" and "Centro."
 
-### Code
-```matlab
-clear all;
-close all;
+![Coverage_Map1](Cobertura_Alcance_Retroalcance.png)
 
-% Define reception sites: Isla and Centro
-rxNames = ["Isla", "Centro"];
-rxLocations = [
-    1.83444167 -76.05666667; ...  % Isla (Lat: 1° 50' 3.99'' N, Lon: 76° 3' 24'' W)
-    1.85257778 -76.04874444];     % Centro (Lat: 1° 51' 9.28'' N, Lon: 76° 2' 55.48'' W)
+### Code Highlights
 
-txLocation = [
-    1.84469167 -76.05725];
+1. **Receiver Definition:**
+   - Two receiver sites, Isla and Centro, are defined with their respective geographical coordinates.
+   - The transmitter's coordinates are also specified.
 
-% Calculate latitude and longitude differences between transmitter and receivers
-latDiff = rxLocations(:,1) - txLocation(1);  % Latitude difference
-lonDiff = rxLocations(:,2) - txLocation(2);  % Longitude difference
+    ```matlab
+    rxNames = ["Isla", "Centro"];
+    rxLocations = [1.83444167 -76.05666667; 1.85257778 -76.04874444]; 
+    txLocation = [1.84469167 -76.05725];
+    ```
 
-% Calculate tilt angles in degrees
-elevAngle = atan2d(latDiff, lonDiff);   % Elevate the antenna to point to the receivers
+2. **Inclination Angle Calculation:**
+   - The differences in latitude and longitude between the transmitter and the receivers are calculated to determine the tilt angles for the antenna.
 
-% Display tilt angles for each receiver
-disp('Tilt angles towards each receiver:');
-disp(elevAngle);
+    ```matlab
+    latDiff = rxLocations(:,1) - txLocation(1);  
+    lonDiff = rxLocations(:,2) - txLocation(2);  
+    elevAngle = atan2d(latDiff, lonDiff);
+    ```
 
-% Define dipole array antenna
-fq = 900e6;  % Transmission frequency 900 MHz
-antenna = linearArray('Element', dipole, ... % Dipole element
-                      'NumElements', 2, ...  % Number of dipoles in the array
-                      'ElementSpacing', 0.5);  % Spacing between dipoles
+3. **Antenna Configuration:**
+   - A linear array antenna is designed, and the average tilt is applied to optimize the signal direction toward the receivers.
 
-% Design the antenna
-antenna = design(antenna, fq);
+    ```matlab
+    antenna = linearArray('Element', dipole, 'NumElements', 2, 'ElementSpacing', 0.5);
+    avgTilt = mean(elevAngle);
+    antenna.Tilt = avgTilt;
+    ```
 
-% Apply tilt to the antenna to point towards the receivers
-avgTilt = mean(elevAngle);
-antenna.Tilt = avgTilt;          % Point towards the average tilt
-antenna.TiltAxis = "z";          % Tilt axis (around the 'z' axis)
+4. **Coverage Mapping:**
+   - The coverage area is visualized using the Longley-Rice model, displaying the signal strength received by the two sites.
 
-% Configure the transmitter with the tilted antenna
-tx = txsite("Name", "Panorama", ...
-    "Latitude", txLocation(1), ...         % Transmitter latitude
-    "Longitude", txLocation(2), ...        % Transmitter longitude
-    "Antenna", antenna, ...                % Directional antenna with tilt
-    "AntennaHeight", 10, ...               % Antenna height
-    "TransmitterFrequency", fq, ...        % Transmission frequency
-    "TransmitterPower", 10);               % Transmission power
+    ```matlab
+    coverage(tx, "longley-rice", "SignalStrengths", rxSensitivity:5:-60);
+    ```
 
-% Receiver sensitivity
-rxSensitivity = -100; % dBm
+## Omnidirectional Transmitter
 
-% Define reception sites separately
-rxIsla = rxsite("Name", "Isla", ...
-    "Latitude", rxLocations(1,1), ...
-    "Longitude", rxLocations(1,2), ...
-    "Antenna", design(monopole, fq), ...  % Omnidirectional antenna
-    "ReceiverSensitivity", rxSensitivity); % Receiver sensitivity: -100 dBm
+### Overview
+This section defines an omnidirectional transmitter also located at "Panorama." The focus is on mapping the coverage area and establishing communication links with mobile receivers.
 
-rxCentro = rxsite("Name", "Centro", ...
-    "Latitude", rxLocations(2,1), ...
-    "Longitude", rxLocations(2,2), ...
-    "Antenna", design(monopole, fq), ...  % Omnidirectional antenna
-    "ReceiverSensitivity", rxSensitivity); % Receiver sensitivity: -100 dBm
+### Code Highlights
 
-% Receiver antenna heights
-rxIsla.AntennaHeight = 15;  % Receiver antenna height in Isla: 15 m
-rxCentro.AntennaHeight = 10;  % Receiver antenna height in Centro: 10 m
+1. **General Parameters:**
+   - Key parameters such as frequency, transmitter power, and receiver sensitivity are defined for the omnidirectional system.
 
-% Display sites on a map
-viewer = siteviewer;
-viewer.Basemap = "openstreetmap";
+    ```matlab
+    fq = 900e6;      
+    txPower = 40;    
+    rxSensitivity = -100; 
+    ```
 
-show(tx)          % Show the base station
-pattern(tx, fq);   % Show the radiation pattern of the base station
+2. **Transmitter Configuration:**
+   - The transmitter is set up with an omnidirectional dipole antenna, specifying its location and height.
 
-% Show reception sites (Isla and Centro)
-show(rxIsla);     % Show the reception site in Isla
-pattern(rxIsla, fq);  % Show the radiation pattern of the receiver in Isla
+    ```matlab
+    tx = txsite("Name","Panorama", "Latitude",1.84469167, "Longitude",-76.05725, ...
+                 "Antenna",design(dipole,fq), "AntennaHeight",10, ...
+                 "TransmitterFrequency",fq, "TransmitterPower",txPower);
+    ```
 
-show(rxCentro);   % Show the reception site in Centro
-pattern(rxCentro, fq);  % Show the radiation pattern of the receiver in Centro
+3. **Receiver Setup:**
+   - The two mobile receivers are created with omnidirectional antennas, and their geographical locations are defined.
 
-% Coverage map using Longley-Rice model
-coverage(tx, "longley-rice", ...
-    "SignalStrengths", rxSensitivity:5:-60)
+    ```matlab
+    rxs = rxsite("Name",rxNames, "Latitude",rxLocations(:,1), ...
+                 "Longitude",rxLocations(:,2), "Antenna",design(monopole,fq), ...
+                 "ReceiverSensitivity",rxSensitivity);
+    ```
 
-% Communication link between base station and receivers
-sc = [0 0.3 0];
-link([rxIsla, rxCentro], tx, "longley-rice", "SuccessColor", sc)
+4. **Coverage Analysis:**
+   - Similar to the directive transmitter, the coverage area is visualized, showing the signal strength across the specified range.
 
+    ```matlab
+    coverage(tx,"PropagationModel","longley-rice", "SignalStrengths", rxSensitivity:5:-60);
+    ```
+
+### Conclusion
+This repository allows for the analysis of different transmission systems' coverage capabilities using MATLAB. Users can adjust parameters and visualize results for both directive and omnidirectional transmission setups.
